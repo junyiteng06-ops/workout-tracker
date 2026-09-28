@@ -1,0 +1,21 @@
+---
+import { SITE } from '@/config/site';
+import PageLayout from '@/layouts/PageLayout.astro';
+---
+
+<PageLayout title="運営者情報" description={`${SITE.name}(${SITE.nameJa})の運営者情報とサイトの目的です。`}>
+  <h2>サイトについて</h2>
+  <p>
+    {SITE.name}は、筋トレの記録をかんたんに続けられるトレーニングログと、トレーニング・栄養・器具選びに役立つコラムを提供するサイトです。
+  </p>
+  <p>「記録すること」は、筋トレを継続し、成長を実感するための一番の近道です。初心者から中級者まで、自分のペースで強くなるためのサポートを目指しています。</p>
+
+  <h2>運営者</h2>
+  <table>
+    <tbody>
+      <tr><th>サイト名</th><td>{SITE.name}({SITE.nameJa})</td></tr>
+      <tr><th>運営</th><td>{SITE.author}</td></tr>
+      <tr><th>お問い合わせ</th><td><a href="/contact">お問い合わせページ</a></td></tr>
+    </tbody>
+  </table>
+</PageLayout>

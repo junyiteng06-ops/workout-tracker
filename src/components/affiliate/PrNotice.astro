@@ -1,0 +1,27 @@
+---
+// 景品表示法(ステルスマーケティング規制)対応: 広告を含む記事の冒頭に表示する
+---
+
+<p class="pr-notice"><span class="pr-notice__badge">PR</span>本記事はアフィリエイト広告(プロモーション)を含みます。</p>
+
+<style>
+  .pr-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .pr-notice__badge {
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: var(--color-muted);
+    color: var(--color-bg);
+    font-weight: 700;
+    font-size: 0.75rem;
+  }
+</style>
