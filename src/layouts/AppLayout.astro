@@ -1,0 +1,66 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import '@/styles/app.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/app', label: 'ホーム', match: (p: string) => p === '/app' },
+  { href: '/app/log/new', label: '記録する', match: (p: string) => p.startsWith('/app/log') },
+  { href: '/app/history', label: '履歴', match: (p: string) => p.startsWith('/app/history') },
+  { href: '/app/progress', label: 'グラフ', match: (p: string) => p.startsWith('/app/progress') },
+  { href: '/app/body', label: '体重', match: (p: string) => p.startsWith('/app/body') },
+  { href: '/app/settings', label: '設定', match: (p: string) => p.startsWith('/app/settings') },
+];
+---
+
+<BaseLayout title={title} noindex>
+  <div class="app container container--narrow">
+    <nav class="app-nav" aria-label="マイログメニュー">
+      {
+        nav.map((item) => (
+          <a href={item.href} aria-current={item.match(path) ? 'page' : undefined}>
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+    <h1 class="app-title">{title}</h1>
+    <slot />
+  </div>
+</BaseLayout>
+
+<style>
+  .app {
+    padding-bottom: 2rem;
+  }
+  .app-nav {
+    display: flex;
+    gap: 0.25rem;
+    margin: 1rem 0 0;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--color-border);
+    scrollbar-width: none;
+  }
+  .app-nav a {
+    flex-shrink: 0;
+    padding: 0.5rem 0.85rem;
+    border-bottom: 3px solid transparent;
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .app-nav a[aria-current='page'] {
+    border-bottom-color: var(--color-primary);
+    color: var(--color-text);
+  }
+  .app-title {
+    margin: 1.25rem 0 1rem;
+    font-size: 1.4rem;
+  }
+</style>

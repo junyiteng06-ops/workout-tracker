@@ -1,0 +1,168 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import AdSlot from '@/components/ads/AdSlot.astro';
+import AffiliateLink from '@/components/affiliate/AffiliateLink.astro';
+import PrNotice from '@/components/affiliate/PrNotice.astro';
+import ProductCard from '@/components/affiliate/ProductCard.astro';
+import ArticleGrid from '@/components/ArticleGrid.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import CtaBox from '@/components/CtaBox.astro';
+import { CATEGORIES } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate, getPublishedArticles, relatedArticles, type Article } from '@/lib/articles';
+import { articleJsonLd, breadcrumbJsonLd, type Crumb } from '@/lib/seo';
+
+export async function getStaticPaths() {
+  const articles = await getPublishedArticles();
+  return articles.map((article) => ({ params: { slug: article.id }, props: { article, all: articles } }));
+}
+
+interface Props {
+  article: Article;
+  all: Article[];
+}
+
+const { article, all } = Astro.props;
+const { data } = article;
+const { Content, headings } = await render(article);
+const toc = headings.filter((h) => h.depth === 2);
+const related = relatedArticles(article, all);
+const category = CATEGORIES[data.category];
+
+const site = Astro.site!;
+const crumbs: Crumb[] = [
+  { label: 'コラム', href: '/articles' },
+  { label: category.label, href: `/articles/category/${data.category}` },
+  { label: data.title },
+];
+const ogImage = data.heroImage?.src ?? '/og-default.png';
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  type="article"
+  image={ogImage}
+  publishedTime={data.pubDate}
+  modifiedTime={data.updatedDate}
+  jsonLd={[
+    articleJsonLd({
+      title: data.title,
+      description: data.description,
+      url: new URL(Astro.url.pathname, site),
+      image: new URL(ogImage, site),
+      published: data.pubDate,
+      modified: data.updatedDate,
+      site,
+    }),
+    breadcrumbJsonLd(crumbs, site),
+  ]}
+>
+  <div class="container container--narrow">
+    <Breadcrumbs items={crumbs} />
+    <article>
+      <header class="article-header">
+        <p class="article-header__meta">
+          <a href={`/articles/category/${data.category}`}>{category.label}</a>
+          <span>公開日: <time datetime={data.pubDate.toISOString()}>{formatDate(data.pubDate)}</time></span>
+          {
+            data.updatedDate && (
+              <span>
+                更新日: <time datetime={data.updatedDate.toISOString()}>{formatDate(data.updatedDate)}</time>
+              </span>
+            )
+          }
+        </p>
+        <h1 class="article-header__title">{data.title}</h1>
+      </header>
+
+      {data.sponsored && <PrNotice />}
+
+      {
+        data.heroImage && (
+          <Image class="hero" src={data.heroImage} alt={data.heroAlt ?? ''} widths={[400, 760, 1200]} sizes="(max-width: 760px) 100vw, 760px" loading="eager" fetchpriority="high" />
+        )
+      }
+
+      {
+        toc.length >= 3 && (
+          <nav class="toc" aria-labelledby="toc-title">
+            <p id="toc-title" class="toc__title">目次</p>
+            <ol>
+              {toc.map((h) => (
+                <li>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+
+      <AdSlot position="in-article" />
+
+      <div class="prose">
+        <Content components={{ AdSlot, ProductCard, AffiliateLink }} />
+      </div>
+
+      <CtaBox />
+      <AdSlot position="article-bottom" />
+    </article>
+
+    {
+      related.length > 0 && (
+        <section class="related">
+          <h2>関連記事</h2>
+          <ArticleGrid articles={related} />
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .article-header__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .article-header__meta a {
+    font-weight: 700;
+  }
+  .article-header__title {
+    margin: 0.5rem 0 1.25rem;
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+  }
+  .hero {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius);
+  }
+  .toc {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+  }
+  .toc__title {
+    margin: 0 0 0.5rem;
+    font-weight: 700;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.9375rem;
+  }
+  .related {
+    margin-top: 3rem;
+  }
+  .related h2 {
+    font-size: 1.25rem;
+  }
+</style>

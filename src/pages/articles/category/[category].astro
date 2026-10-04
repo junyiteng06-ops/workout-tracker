@@ -1,0 +1,38 @@
+---
+import ArticleGrid from '@/components/ArticleGrid.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import { CATEGORIES, type CategoryKey } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getActiveCategories, getPublishedArticles, type Article } from '@/lib/articles';
+import { breadcrumbJsonLd } from '@/lib/seo';
+
+export async function getStaticPaths() {
+  const articles = await getPublishedArticles();
+  return (await getActiveCategories()).map((category) => ({
+    params: { category },
+    props: { category, articles: articles.filter((a) => a.data.category === category) },
+  }));
+}
+
+interface Props {
+  category: CategoryKey;
+  articles: Article[];
+}
+
+const { category, articles } = Astro.props;
+const { label, description } = CATEGORIES[category];
+const crumbs = [{ label: 'コラム', href: '/articles' }, { label }];
+---
+
+<BaseLayout
+  title={`${label}の記事一覧`}
+  description={`${description}に関する記事の一覧です。`}
+  jsonLd={[breadcrumbJsonLd(crumbs, Astro.site!)]}
+>
+  <div class="container">
+    <Breadcrumbs items={crumbs} />
+    <h1>{label}</h1>
+    <p>{description}</p>
+    <ArticleGrid articles={articles} />
+  </div>
+</BaseLayout>

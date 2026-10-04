@@ -1,0 +1,135 @@
+---
+import ArticleGrid from '@/components/ArticleGrid.astro';
+import { CATEGORIES, SITE } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getActiveCategories, getPublishedArticles } from '@/lib/articles';
+import { websiteJsonLd } from '@/lib/seo';
+
+const latest = (await getPublishedArticles()).slice(0, 6);
+const activeCategories = await getActiveCategories();
+---
+
+<BaseLayout jsonLd={[websiteJsonLd(Astro.site!)]}>
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero__title">{SITE.tagline}</h1>
+      <p class="hero__lead">
+        種目・重量・回数・セット数をかんたんに記録。重量の推移をグラフで確認できる、無料の筋トレ記録サービスです。
+      </p>
+      <div class="hero__actions">
+        <a class="btn" href="/signup">無料で記録をはじめる</a>
+        <a class="btn btn--outline" href="/tools/1rm">1RMを計算する</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="container features" aria-label="主な機能">
+    <div class="feature">
+      <h2>かんたん記録</h2>
+      <p>種目・重量・回数・セット数、体重をスマホからすぐに入力できます。</p>
+    </div>
+    <div class="feature">
+      <h2>成長をグラフで</h2>
+      <p>最大重量・推定1RM・ボリュームの推移をグラフで確認できます。</p>
+    </div>
+    <div class="feature">
+      <h2>知識も身につく</h2>
+      <p>フォーム解説や器具レビューなど、トレーニングに役立つコラムを発信しています。</p>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="section-head">
+      <h2>新着コラム</h2>
+      <a href="/articles">すべて見る</a>
+    </div>
+    <ArticleGrid articles={latest} />
+  </section>
+
+  <section class="container">
+    <h2>カテゴリから探す</h2>
+    <ul class="category-list">
+      {
+        activeCategories.map((key) => (
+          <li>
+            <a href={`/articles/category/${key}`}>
+              <strong>{CATEGORIES[key].label}</strong>
+              <span>{CATEGORIES[key].description}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 3.5rem 0 3rem;
+    background: var(--color-surface);
+    text-align: center;
+  }
+  .hero__title {
+    margin: 0;
+    font-size: clamp(1.75rem, 6vw, 2.75rem);
+    font-weight: 900;
+  }
+  .hero__lead {
+    max-width: 36rem;
+    margin: 1rem auto 1.5rem;
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .feature h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.125rem;
+    color: var(--color-primary);
+  }
+  .feature p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  section h2 {
+    font-size: 1.35rem;
+  }
+  .category-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    padding: 0;
+    list-style: none;
+  }
+  .category-list a {
+    display: block;
+    height: 100%;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: inherit;
+    text-decoration: none;
+  }
+  .category-list a:hover {
+    border-color: var(--color-primary);
+  }
+  .category-list span {
+    display: block;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+  }
+</style>

@@ -1,0 +1,42 @@
+---
+import Alert from '@/components/Alert.astro';
+import AuthLayout from '@/layouts/AuthLayout.astro';
+import { authErrorMessage } from '@/lib/authErrors';
+import { formString, safeNext } from '@/lib/http';
+
+export const prerender = false;
+
+const next = safeNext(Astro.url.searchParams.get('next'));
+if (Astro.locals.user) return Astro.redirect(next);
+
+let error = Astro.url.searchParams.has('error') ? 'リンクが無効か、有効期限が切れています。もう一度お試しください。' : '';
+let email = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  email = formString(form, 'email');
+  const password = String(form.get('password') ?? '');
+  const { error: authError } = await Astro.locals.supabase.auth.signInWithPassword({ email, password });
+  if (!authError) return Astro.redirect(next, 303);
+  error = authErrorMessage(authError);
+}
+---
+
+<AuthLayout title="ログイン">
+  <Alert type="error" message={error} />
+  <form method="post">
+    <label>
+      メールアドレス
+      <input type="email" name="email" value={email} autocomplete="email" required />
+    </label>
+    <label>
+      パスワード
+      <input type="password" name="password" autocomplete="current-password" required />
+    </label>
+    <button class="btn" type="submit">ログイン</button>
+  </form>
+  <div class="auth__links">
+    <p><a href="/forgot-password">パスワードを忘れた方</a></p>
+    <p>アカウントをお持ちでない方は <a href={`/signup${next !== '/app' ? `?next=${encodeURIComponent(next)}` : ''}`}>新規登録(無料)</a></p>
+  </div>
+</AuthLayout>
