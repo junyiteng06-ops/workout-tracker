@@ -1,3 +1,24 @@
+/* グラフ用の色(validate_palette で明暗両モードの判別性・コントラストを検証済み) */
+:root {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-muted: #6f6e69;
+  --delta-up: #006300;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --chart-grid: #2c2c2a;
+    --chart-axis: #4a4a46;
+    --chart-muted: #9a9890;
+    --delta-up: #0ca30c;
+  }
+}
+
 .app-card {
   padding: 1rem;
   border: 1px solid var(--color-border);
@@ -183,4 +204,48 @@
 .wf-save {
   padding: 0.9rem;
   font-size: 1.0625rem;
+}
+
+/* 統計タイル */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tile__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.tile__value {
+  margin: 0.15rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.tile__value small {
+  margin-left: 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.tile__delta {
+  margin: 0.1rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.tile__delta--up {
+  color: var(--delta-up);
+  font-weight: 700;
 }

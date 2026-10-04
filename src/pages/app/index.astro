@@ -25,6 +25,7 @@ const body = latestBody.data;
   <Alert type="error" message={failed ? 'データの読み込みに失敗しました。時間をおいて再読み込みしてください。' : ''} />
 
   <a class="btn cta" href="/app/log/new">＋ 今日のトレーニングを記録</a>
+  {workouts.length > 0 && <a class="progress-link" href="/app/progress">成長グラフを見る →</a>}
 
   <div class="stats">
     <div class="stat app-card">
@@ -71,6 +72,13 @@ const body = latestBody.data;
     padding: 0.9rem;
     font-size: 1.0625rem;
   }
+  .progress-link {
+    display: block;
+    margin-top: 0.75rem;
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
   .stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -87,7 +95,6 @@ const body = latestBody.data;
     font-size: 1.75rem;
     font-weight: 900;
     line-height: 1.2;
-    font-variant-numeric: tabular-nums;
   }
   .stat__value span {
     margin-left: 0.15rem;

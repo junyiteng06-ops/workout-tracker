@@ -10,6 +10,14 @@ export function brzycki(weight: number, reps: number): number {
   return (weight * 36) / (37 - Math.min(reps, 36));
 }
 
+/** 推定1RM(Epley式とBrzycki式の平均。1RM計算ツールと同じ値になる) */
+export function estimate1RM(weight: number, reps: number): number {
+  return (epley(weight, reps) + brzycki(weight, reps)) / 2;
+}
+
+/** 推定の精度が保てる回数の上限。これを超えるセットは推定1RMの計算に使わない */
+export const MAX_REPS_FOR_ESTIMATE = 12;
+
 /** 各回数で扱える重量の目安(%1RM)。一般的に用いられる換算表 */
 export const REP_PERCENTAGES: ReadonlyArray<{ reps: number; percent: number }> = [
   { reps: 1, percent: 100 },

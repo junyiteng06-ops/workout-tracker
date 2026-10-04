@@ -10,7 +10,7 @@
 | ホスティング | Cloudflare Workers(`@astrojs/cloudflare`) |
 | DB・認証 | Supabase(Postgres + Auth、RLSでユーザーごとにデータを分離) |
 | 記事 | MDX(`src/content/articles/`) |
-| グラフ | Chart.js(フェーズ3で導入) |
+| グラフ | Chart.js(グラフのあるページでだけ読み込み) |
 
 ## 開発
 
@@ -40,7 +40,7 @@ src/
 ├─ lib/                    記事取得・構造化データ・アフィリエイトURL生成・1RM計算・Supabase接続
 ├─ middleware.ts           ログイン判定(/app と /api はログイン必須)
 └─ pages/
-    ├─ app/                マイログ(ダッシュボード・記録・履歴・体重・設定)
+    ├─ app/                マイログ(ダッシュボード・記録・履歴・グラフ・体重・設定)
     ├─ api/                トレーニング保存などのAPI
     └─ login / signup / forgot-password / auth/
 supabase/migrations/       DBスキーマ(SQL)
@@ -101,5 +101,5 @@ draft: false                 # true なら本番では非公開
 
 - [x] フェーズ1: 土台、ブログ、広告・アフィリエイト部品、法務ページ、1RM計算ツール
 - [x] フェーズ2: Supabase認証、トレーニングログの登録・編集・削除、体重記録
-- [ ] フェーズ3: グラフ・ダッシュボード(最大重量・推定1RM・ボリューム・体重)
+- [x] フェーズ3: グラフ(推定1RM・最大重量・ボリューム・体重の推移)
 - [ ] フェーズ4: PWA対応、CSV出力、メニューのテンプレート

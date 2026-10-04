@@ -1,7 +1,10 @@
 ---
 import Alert from '@/components/Alert.astro';
+import TrendChart from '@/components/charts/TrendChart.astro';
 import AppLayout from '@/layouts/AppLayout.astro';
+import type { ChartSpec } from '@/lib/charts/types';
 import { formString, todayJst } from '@/lib/http';
+import { rangeStart } from '@/lib/progress';
 import { bodyMetricInput, firstIssue, optionalNumber } from '@/lib/validation';
 import { formatDateJa } from '@/lib/workouts';
 
@@ -41,11 +44,28 @@ if (Astro.request.method === 'GET') {
   if (Astro.url.searchParams.has('deleted')) success = '削除しました。';
 }
 
-const { data: records, error: loadError } = await supabase
-  .from('body_metrics')
-  .select('id, measured_on, weight, body_fat')
-  .order('measured_on', { ascending: false })
-  .limit(60);
+const [{ data: records, error: loadError }, { data: trend }] = await Promise.all([
+  supabase.from('body_metrics').select('id, measured_on, weight, body_fat').order('measured_on', { ascending: false }).limit(60),
+  supabase
+    .from('body_metrics')
+    .select('measured_on, weight')
+    .not('weight', 'is', null)
+    .gte('measured_on', rangeStart('1y', todayJst())!)
+    .order('measured_on')
+    .limit(1000),
+]);
+
+const trendPoints = trend ?? [];
+const weightSpec: ChartSpec = {
+  kind: 'line',
+  unit: 'kg',
+  series: [{ label: '体重' }],
+  points: trendPoints.map((r) => ({ date: r.measured_on, values: [Number(r.weight)] })),
+};
+const weightSummary =
+  trendPoints.length > 0
+    ? `直近1年で${trendPoints.length}回記録しています。最初は${Number(trendPoints[0].weight)}kg、最新は${Number(trendPoints.at(-1)!.weight)}kgです。`
+    : '';
 
 const rows = (records ?? []).map((r, i, all) => {
   const prev = all.slice(i + 1).find((p) => p.weight !== null);
@@ -74,6 +94,8 @@ const rows = (records ?? []).map((r, i, all) => {
     <button class="btn" type="submit">保存</button>
     <p class="muted body-form__note">同じ日付で保存すると上書きされます。</p>
   </form>
+
+  {trendPoints.length >= 2 && <TrendChart title="体重の推移(直近1年)" summary={weightSummary} spec={weightSpec} height={200} />}
 
   <h2 class="history-title">記録</h2>
   {

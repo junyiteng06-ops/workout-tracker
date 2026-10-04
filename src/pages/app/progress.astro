@@ -1,0 +1,169 @@
+---
+import Alert from '@/components/Alert.astro';
+import TrendChart from '@/components/charts/TrendChart.astro';
+import AppLayout from '@/layouts/AppLayout.astro';
+import type { ChartSpec } from '@/lib/charts/types';
+import { todayJst } from '@/lib/http';
+import { exerciseProgress, loggedExercises, parseRange, RANGES, rangeStart, round1, type SessionPoint } from '@/lib/progress';
+import { parseId } from '@/lib/workoutApi';
+
+export const prerender = false;
+
+const { supabase } = Astro.locals;
+const range = parseRange(Astro.url.searchParams.get('range'));
+
+let error = '';
+let exercises: { id: number; name: string }[] = [];
+let points: SessionPoint[] = [];
+let selected: { id: number; name: string } | undefined;
+
+try {
+  exercises = await loggedExercises(supabase);
+  const requested = parseId(Astro.url.searchParams.get('exercise') ?? undefined);
+  selected = exercises.find((e) => e.id === requested) ?? exercises[0];
+  if (selected) points = await exerciseProgress(supabase, selected.id, rangeStart(range, todayJst()));
+} catch {
+  error = 'データの読み込みに失敗しました。時間をおいて再読み込みしてください。';
+}
+
+const e1rmPoints = points.filter((p) => p.e1rm !== null);
+const bestE1rm = e1rmPoints.length ? Math.max(...e1rmPoints.map((p) => p.e1rm!)) : null;
+const firstE1rm = e1rmPoints[0]?.e1rm ?? null;
+const lastE1rm = e1rmPoints.at(-1)?.e1rm ?? null;
+const e1rmDelta = e1rmPoints.length >= 2 && firstE1rm !== null && lastE1rm !== null ? round1(lastE1rm - firstE1rm) : null;
+const bestWeight = points.length ? Math.max(...points.map((p) => p.maxWeight)) : null;
+const totalVolume = points.reduce((sum, p) => sum + p.volume, 0);
+
+const strengthSpec: ChartSpec = {
+  kind: 'line',
+  unit: 'kg',
+  series: [{ label: '推定1RM' }, { label: '最大重量' }],
+  points: points.map((p) => ({ date: p.date, values: [p.e1rm === null ? null : round1(p.e1rm), p.maxWeight] })),
+};
+const volumeSpec: ChartSpec = {
+  kind: 'bar',
+  unit: 'kg',
+  series: [{ label: 'ボリューム' }],
+  points: points.map((p) => ({ date: p.date, values: [Math.round(p.volume)] })),
+};
+
+const strengthSummary =
+  firstE1rm !== null && lastE1rm !== null
+    ? `${points.length}回のトレーニングで、推定1RMは${round1(firstE1rm)}kgから${round1(lastE1rm)}kgになりました。`
+    : `${points.length}回のトレーニングの記録です。`;
+const volumeSummary = `1回あたりのボリュームは最大${Math.round(Math.max(0, ...points.map((p) => p.volume))).toLocaleString('ja-JP')}kgです。`;
+const n = (v: number) => v.toLocaleString('ja-JP', { maximumFractionDigits: 1 });
+---
+
+<AppLayout title="成長グラフ">
+  <Alert type="error" message={error} />
+
+  {
+    !error && exercises.length === 0 ? (
+      <p class="empty">
+        まだ記録がありません。<a href="/app/log/new">トレーニングを記録する</a>と、ここに重量の推移が表示されます。
+      </p>
+    ) : (
+      selected && (
+        <>
+          <form class="filters" method="get" action="/app/progress">
+            <label class="field">
+              種目
+              <select name="exercise" data-autosubmit>
+                {exercises.map((e) => (
+                  <option value={e.id} selected={e.id === selected!.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label class="field">
+              期間
+              <select name="range" data-autosubmit>
+                {Object.entries(RANGES).map(([key, { label }]) => (
+                  <option value={key} selected={key === range}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <noscript>
+              <button class="btn btn--small" type="submit">表示</button>
+            </noscript>
+          </form>
+
+          {points.length === 0 ? (
+            <p class="empty">
+              この期間には{selected.name}の記録がありません。期間を「全期間」に変えてみてください。
+            </p>
+          ) : (
+            <>
+              <div class="tiles">
+                <div class="tile app-card">
+                  <p class="tile__label">推定1RM(最高)</p>
+                  <p class="tile__value">
+                    {bestE1rm === null ? '-' : n(round1(bestE1rm))}
+                    <small>kg</small>
+                  </p>
+                  {e1rmDelta !== null && (
+                    <p class:list={['tile__delta', e1rmDelta > 0 && 'tile__delta--up']}>
+                      {e1rmDelta > 0 ? '▲' : e1rmDelta < 0 ? '▼' : '±'} {e1rmDelta > 0 ? '+' : ''}
+                      {n(e1rmDelta)}kg(期間内)
+                    </p>
+                  )}
+                </div>
+                <div class="tile app-card">
+                  <p class="tile__label">最大重量</p>
+                  <p class="tile__value">
+                    {bestWeight === null ? '-' : n(bestWeight)}
+                    <small>kg</small>
+                  </p>
+                </div>
+                <div class="tile app-card">
+                  <p class="tile__label">トレーニング回数</p>
+                  <p class="tile__value">
+                    {points.length}
+                    <small>回</small>
+                  </p>
+                </div>
+                <div class="tile app-card">
+                  <p class="tile__label">総ボリューム</p>
+                  <p class="tile__value">
+                    {Math.round(totalVolume).toLocaleString('ja-JP')}
+                    <small>kg</small>
+                  </p>
+                </div>
+              </div>
+
+              <TrendChart title={`${selected.name}の推定1RMと最大重量`} summary={strengthSummary} spec={strengthSpec} />
+              <TrendChart title={`${selected.name}のボリューム(重量×回数の合計)`} summary={volumeSummary} spec={volumeSpec} height={200} />
+              <p class="note muted">
+                推定1RMは、1〜12回のセットからEpley式とBrzycki式の平均で計算しています(<a href="/tools/1rm">1RM計算ツール</a>と同じ計算方法)。
+              </p>
+            </>
+          )}
+        </>
+      )
+    )
+  }
+</AppLayout>
+
+<script>
+  // 種目・期間を選んだらすぐに表示を切り替える(JSが無い環境では「表示」ボタンで送信)
+  for (const select of document.querySelectorAll<HTMLSelectElement>('select[data-autosubmit]')) {
+    select.addEventListener('change', () => select.form?.requestSubmit());
+  }
+</script>
+
+<style>
+  .filters {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.75rem;
+    align-items: end;
+    margin-bottom: 1rem;
+  }
+  .note {
+    font-size: 0.8125rem;
+  }
+</style>
