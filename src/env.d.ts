@@ -8,3 +8,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare namespace App {
+  interface Locals {
+    supabase: import('@/lib/supabase').Supabase;
+    user: { id: string; email: string } | null;
+  }
+}

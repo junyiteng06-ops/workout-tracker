@@ -1,0 +1,73 @@
+---
+import { formatDateJa, formatWeight, groupSets, totalVolume, type SetWithExercise } from '@/lib/workouts';
+
+interface Props {
+  workout: { id: number; performed_on: string; note: string | null; workout_sets: SetWithExercise[] };
+}
+
+const { workout } = Astro.props;
+const groups = groupSets(workout.workout_sets);
+const volume = totalVolume(workout.workout_sets);
+---
+
+<article class="workout app-card">
+  <header class="workout__head">
+    <h3 class="workout__date"><time datetime={workout.performed_on}>{formatDateJa(workout.performed_on)}</time></h3>
+    <a class="btn btn--ghost btn--small" href={`/app/log/${workout.id}`}>編集</a>
+  </header>
+  <ul class="workout__list">
+    {
+      groups.map((g) => (
+        <li>
+          <span class="workout__exercise">{g.name}</span>
+          <span class="workout__sets">{g.sets.map((s) => `${formatWeight(s.weight)}×${s.reps}`).join(' / ')}</span>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="workout__meta muted">{groups.length}種目・{workout.workout_sets.length}セット・総ボリューム {Math.round(volume).toLocaleString('ja-JP')}kg</p>
+  {workout.note && <p class="workout__note">{workout.note}</p>}
+</article>
+
+<style>
+  .workout + .workout {
+    margin-top: 0.75rem;
+  }
+  .workout__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .workout__date {
+    margin: 0;
+    font-size: 1rem;
+  }
+  .workout__list {
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .workout__list li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    padding: 0.35rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .workout__exercise {
+    font-weight: 700;
+  }
+  .workout__sets {
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .workout__meta {
+    margin: 0.5rem 0 0;
+    font-size: 0.8125rem;
+  }
+  .workout__note {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+  }
+</style>

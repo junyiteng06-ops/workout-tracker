@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, envField } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
@@ -13,6 +13,13 @@ export default defineConfig({
     // 公開ページはビルド時に画像を最適化する(実行時の画像変換は使わない＝無料枠で完結)
     imageService: 'compile',
   }),
+  env: {
+    schema: {
+      // Cloudflare では wrangler.jsonc の vars から読む(公開しても安全な値のみ)
+      SUPABASE_URL: envField.string({ context: 'server', access: 'public', url: true }),
+      SUPABASE_PUBLISHABLE_KEY: envField.string({ context: 'server', access: 'public' }),
+    },
+  },
   integrations: [
     mdx(),
     react(),

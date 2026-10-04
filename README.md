@@ -8,7 +8,7 @@
 |---|---|
 | フレームワーク | Astro 7 + React(必要な箇所のみ)+ TypeScript |
 | ホスティング | Cloudflare Workers(`@astrojs/cloudflare`) |
-| DB・認証 | Supabase(フェーズ2で導入) |
+| DB・認証 | Supabase(Postgres + Auth、RLSでユーザーごとにデータを分離) |
 | 記事 | MDX(`src/content/articles/`) |
 | グラフ | Chart.js(フェーズ3で導入) |
 
@@ -22,7 +22,9 @@ npm run build    # 本番ビルド(dist/)
 npm run preview  # ビルド結果をCloudflareのランタイム(workerd)で確認
 ```
 
-環境変数は `.env.example` を `.env` にコピーして設定します。未設定でも動作します(開発時は広告枠がプレースホルダ表示、本番では非表示)。
+Supabase の接続先(URL と publishable key)は `wrangler.jsonc` の `vars` に設定済みです。publishable key は公開しても安全なキーです。**service_role / secret キーは絶対にリポジトリに入れないでください。**
+
+広告・アフィリエイト用の環境変数は `.env.example` を `.env` にコピーして設定します。未設定でも動作します(開発時は広告枠がプレースホルダ表示、本番では非表示)。
 
 ## ディレクトリ構成
 
@@ -35,8 +37,13 @@ src/
 │   ├─ ads/AdSlot.astro           AdSense広告枠(遅延読み込み・高さ確保済み)
 │   └─ affiliate/                 ProductCard / AffiliateLink / PrNotice
 ├─ layouts/                BaseLayout(SEO共通)/ PageLayout(固定ページ)
-├─ lib/                    記事取得・構造化データ・アフィリエイトURL生成・1RM計算
-└─ pages/                  ルーティング
+├─ lib/                    記事取得・構造化データ・アフィリエイトURL生成・1RM計算・Supabase接続
+├─ middleware.ts           ログイン判定(/app と /api はログイン必須)
+└─ pages/
+    ├─ app/                マイログ(ダッシュボード・記録・履歴・体重・設定)
+    ├─ api/                トレーニング保存などのAPI
+    └─ login / signup / forgot-password / auth/
+supabase/migrations/       DBスキーマ(SQL)
 ```
 
 ## 記事の書き方
@@ -64,6 +71,18 @@ draft: false                 # true なら本番では非公開
 
 記事ページでは、目次の下と記事末尾に広告枠が自動で入ります。
 
+## Supabase の初期設定(最初に1回だけ)
+
+1. ダッシュボードの **SQL Editor** を開き、`supabase/migrations/20261004000000_init.sql` の中身を貼り付けて **Run**
+   - テーブル・アクセス制御(RLS)・保存用の関数・プリセット種目が作成されます
+2. **Authentication → URL Configuration**
+   - **Site URL**: 本番のURL(公開前は `http://localhost:4321`)
+   - **Redirect URLs** に追加: `http://localhost:4321/**` と、本番URLの `https://(ドメイン)/**`
+3. **Authentication → Emails → SMTP Settings**(公開前に必須)
+   - Supabase 標準のメール送信は、プロジェクトのメンバー宛てにしか送れず、送信数の上限も低いです。一般の人に登録してもらう前に、[Resend](https://resend.com) などの SMTP を設定してください(無料枠あり)
+
+スキーマを変更するときは `supabase/migrations/` に新しいSQLファイルを追加し、`src/lib/database.types.ts` も合わせて更新します。
+
 ## 収益化の設定
 
 1. **AdSense**: 審査に通ったら `PUBLIC_ADSENSE_CLIENT` を設定し、管理画面で作成した広告ユニットのIDを `src/config/site.ts` の `ADS.slots` に入れる。`/ads.txt` は自動生成されます。EU圏向けの同意管理は、AdSense管理画面の「プライバシーとメッセージ」で設定します
@@ -81,6 +100,6 @@ draft: false                 # true なら本番では非公開
 ## ロードマップ
 
 - [x] フェーズ1: 土台、ブログ、広告・アフィリエイト部品、法務ページ、1RM計算ツール
-- [ ] フェーズ2: Supabase認証、トレーニングログの登録・編集・削除
+- [x] フェーズ2: Supabase認証、トレーニングログの登録・編集・削除、体重記録
 - [ ] フェーズ3: グラフ・ダッシュボード(最大重量・推定1RM・ボリューム・体重)
 - [ ] フェーズ4: PWA対応、CSV出力、メニューのテンプレート

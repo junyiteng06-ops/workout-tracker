@@ -1,0 +1,179 @@
+---
+import Alert from '@/components/Alert.astro';
+import AppLayout from '@/layouts/AppLayout.astro';
+import { formString, todayJst } from '@/lib/http';
+import { bodyMetricInput, firstIssue, optionalNumber } from '@/lib/validation';
+import { formatDateJa } from '@/lib/workouts';
+
+export const prerender = false;
+
+const { supabase, user } = Astro.locals;
+let error = '';
+let success = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  if (formString(form, 'intent') === 'delete') {
+    const id = Number(formString(form, 'id'));
+    const { error: e } = await supabase.from('body_metrics').delete().eq('id', id);
+    if (e) error = '削除に失敗しました。';
+    else return Astro.redirect('/app/body?deleted=1', 303);
+  } else {
+    const parsed = bodyMetricInput.safeParse({
+      measured_on: formString(form, 'measured_on'),
+      weight: optionalNumber(formString(form, 'weight')),
+      body_fat: optionalNumber(formString(form, 'body_fat')),
+    });
+    if (!parsed.success) {
+      error = firstIssue(parsed.error);
+    } else {
+      const { error: e } = await supabase
+        .from('body_metrics')
+        .upsert({ ...parsed.data, user_id: user!.id }, { onConflict: 'user_id,measured_on' });
+      if (e) error = '保存に失敗しました。時間をおいてもう一度お試しください。';
+      else return Astro.redirect('/app/body?saved=1', 303);
+    }
+  }
+}
+
+if (Astro.request.method === 'GET') {
+  if (Astro.url.searchParams.has('saved')) success = '保存しました。';
+  if (Astro.url.searchParams.has('deleted')) success = '削除しました。';
+}
+
+const { data: records, error: loadError } = await supabase
+  .from('body_metrics')
+  .select('id, measured_on, weight, body_fat')
+  .order('measured_on', { ascending: false })
+  .limit(60);
+
+const rows = (records ?? []).map((r, i, all) => {
+  const prev = all.slice(i + 1).find((p) => p.weight !== null);
+  const diff = r.weight !== null && prev?.weight != null ? Number(r.weight) - Number(prev.weight) : null;
+  return { ...r, diff };
+});
+---
+
+<AppLayout title="体重・体脂肪率">
+  <Alert type="success" message={success} />
+  <Alert type="error" message={error || (loadError ? 'データの読み込みに失敗しました。' : '')} />
+
+  <form method="post" action="/app/body" class="body-form app-card">
+    <label class="field">
+      日付
+      <input type="date" name="measured_on" value={todayJst()} max={todayJst()} required />
+    </label>
+    <label class="field">
+      体重(kg)
+      <input type="number" name="weight" inputmode="decimal" step="0.1" min="1" max="499" placeholder="例: 65.4" />
+    </label>
+    <label class="field">
+      体脂肪率(%)
+      <input type="number" name="body_fat" inputmode="decimal" step="0.1" min="0" max="99" placeholder="任意" />
+    </label>
+    <button class="btn" type="submit">保存</button>
+    <p class="muted body-form__note">同じ日付で保存すると上書きされます。</p>
+  </form>
+
+  <h2 class="history-title">記録</h2>
+  {
+    rows.length > 0 ? (
+      <table class="records">
+        <thead>
+          <tr>
+            <th scope="col">日付</th>
+            <th scope="col">体重</th>
+            <th scope="col">前回比</th>
+            <th scope="col">体脂肪率</th>
+            <th scope="col">
+              <span class="visually-hidden">操作</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr>
+              <td>{formatDateJa(r.measured_on)}</td>
+              <td>{r.weight !== null ? `${Number(r.weight)}kg` : '-'}</td>
+              <td class:list={[r.diff !== null && (r.diff > 0 ? 'up' : r.diff < 0 ? 'down' : '')]}>
+                {r.diff === null ? '-' : `${r.diff > 0 ? '+' : ''}${r.diff.toFixed(1)}`}
+              </td>
+              <td>{r.body_fat !== null ? `${Number(r.body_fat)}%` : '-'}</td>
+              <td>
+                <form method="post" action="/app/body">
+                  <input type="hidden" name="intent" value="delete" />
+                  <input type="hidden" name="id" value={r.id} />
+                  <button class="link-btn" type="submit" aria-label={`${formatDateJa(r.measured_on)}の記録を削除`}>
+                    削除
+                  </button>
+                </form>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p class="empty">まだ記録がありません。</p>
+    )
+  }
+</AppLayout>
+
+<style>
+  .body-form {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    align-items: end;
+  }
+  .body-form .btn {
+    grid-column: 1 / -1;
+  }
+  .body-form__note {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.8125rem;
+  }
+  .history-title {
+    font-size: 1.125rem;
+  }
+  .records {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .records th,
+  .records td {
+    padding: 0.5rem 0.35rem;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+  .records th {
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .records .up {
+    color: #e03131;
+  }
+  .records .down {
+    color: #1971c2;
+  }
+  .link-btn {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-muted);
+    font: inherit;
+    font-size: 0.8125rem;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  @media (max-width: 480px) {
+    .body-form {
+      grid-template-columns: 1fr 1fr;
+    }
+    .body-form label:first-child {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

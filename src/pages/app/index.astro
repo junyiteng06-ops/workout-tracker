@@ -1,8 +1,112 @@
 ---
-import PageLayout from '@/layouts/PageLayout.astro';
+import Alert from '@/components/Alert.astro';
+import WorkoutSummary from '@/components/app/WorkoutSummary.astro';
+import AppLayout from '@/layouts/AppLayout.astro';
+import { todayJst } from '@/lib/http';
+import { formatDateJa, WORKOUT_SELECT } from '@/lib/workouts';
+
+export const prerender = false;
+
+const { supabase } = Astro.locals;
+const monthStart = `${todayJst().slice(0, 7)}-01`;
+
+const [recent, monthCount, latestBody] = await Promise.all([
+  supabase.from('workouts').select(WORKOUT_SELECT).order('performed_on', { ascending: false }).order('id', { ascending: false }).limit(3),
+  supabase.from('workouts').select('id', { count: 'exact', head: true }).gte('performed_on', monthStart),
+  supabase.from('body_metrics').select('measured_on, weight, body_fat').order('measured_on', { ascending: false }).limit(1).maybeSingle(),
+]);
+
+const failed = recent.error || monthCount.error || latestBody.error;
+const workouts = recent.data ?? [];
+const body = latestBody.data;
 ---
 
-<PageLayout title="トレーニングログ" description="トレーニングログ機能は準備中です。" noindex>
-  <p>トレーニングログ機能は現在準備中です。公開までもうしばらくお待ちください。</p>
-  <p>それまでは、<a href="/tools/1rm">1RM計算ツール</a>や<a href="/articles">コラム</a>をご活用ください。</p>
-</PageLayout>
+<AppLayout title="マイログ">
+  <Alert type="error" message={failed ? 'データの読み込みに失敗しました。時間をおいて再読み込みしてください。' : ''} />
+
+  <a class="btn cta" href="/app/log/new">＋ 今日のトレーニングを記録</a>
+
+  <div class="stats">
+    <div class="stat app-card">
+      <p class="stat__label">今月のトレーニング</p>
+      <p class="stat__value">{monthCount.count ?? 0}<span>回</span></p>
+    </div>
+    <div class="stat app-card">
+      <p class="stat__label">最新の体重</p>
+      {
+        body?.weight ? (
+          <p class="stat__value">
+            {Number(body.weight)}
+            <span>kg</span>
+          </p>
+        ) : (
+          <p class="stat__value stat__value--empty">
+            <a href="/app/body">記録する</a>
+          </p>
+        )
+      }
+      {body && <p class="stat__sub muted">{formatDateJa(body.measured_on)}</p>}
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>最近のトレーニング</h2>
+      {workouts.length > 0 && <a href="/app/history">すべて見る</a>}
+    </div>
+    {
+      workouts.length > 0 ? (
+        workouts.map((w) => <WorkoutSummary workout={w} />)
+      ) : (
+        <p class="empty">まだ記録がありません。最初のトレーニングを記録してみましょう。</p>
+      )
+    }
+  </section>
+</AppLayout>
+
+<style>
+  .cta {
+    display: block;
+    text-align: center;
+    padding: 0.9rem;
+    font-size: 1.0625rem;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 1rem 0 1.5rem;
+  }
+  .stat__label {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .stat__value {
+    margin: 0.25rem 0 0;
+    font-size: 1.75rem;
+    font-weight: 900;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat__value span {
+    margin-left: 0.15rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  .stat__value--empty {
+    font-size: 1rem;
+  }
+  .stat__sub {
+    margin: 0;
+    font-size: 0.75rem;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .section-head h2 {
+    font-size: 1.125rem;
+  }
+</style>
