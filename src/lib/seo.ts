@@ -1,5 +1,10 @@
 import { SITE } from '@/config/site';
 
+/** ビルド時(build.format: 'file')のパス "/foo.html" "/index.html" を、実際に配信される "/foo" "/" に揃える */
+export function cleanPath(pathname: string): string {
+  return pathname.replace(/(\/index)?\.html$/, '') || '/';
+}
+
 export interface Crumb {
   label: string;
   href?: string;

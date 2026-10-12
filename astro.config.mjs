@@ -6,7 +6,8 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: process.env.PUBLIC_SITE_URL ?? 'https://example.com',
+  // 独自ドメインに移行するときはここを書き換える(またはビルド時の環境変数 PUBLIC_SITE_URL で上書き)
+  site: process.env.PUBLIC_SITE_URL ?? 'https://workout-tracker.junlab.workers.dev',
   trailingSlash: 'never',
   build: { format: 'file' },
   adapter: cloudflare({

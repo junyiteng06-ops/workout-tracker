@@ -1,12 +1,13 @@
 ---
 import { SITE } from '@/config/site';
+import { cleanPath } from '@/lib/seo';
 
 const nav = [
   { href: '/articles', label: 'コラム' },
   { href: '/tools', label: 'ツール' },
   { href: '/app', label: 'マイログ' },
 ];
-const current = Astro.url.pathname;
+const current = cleanPath(Astro.url.pathname);
 ---
 
 <header class="header">
