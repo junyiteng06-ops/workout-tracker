@@ -1,0 +1,68 @@
+---
+import Alert from '@/components/Alert.astro';
+import AppLayout from '@/layouts/AppLayout.astro';
+import { authErrorMessage } from '@/lib/authErrors';
+
+export const prerender = false;
+
+const MIN_PASSWORD = 8;
+let error = '';
+let success = '';
+const isReset = Astro.url.searchParams.has('reset');
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const password = String(form.get('password') ?? '');
+  const confirm = String(form.get('password_confirm') ?? '');
+  if (password.length < MIN_PASSWORD) error = `パスワードは${MIN_PASSWORD}文字以上で入力してください。`;
+  else if (password !== confirm) error = '確認用のパスワードが一致しません。';
+  else {
+    const { error: e } = await Astro.locals.supabase.auth.updateUser({ password });
+    if (e) error = authErrorMessage(e);
+    else success = 'パスワードを変更しました。';
+  }
+}
+---
+
+<AppLayout title="設定">
+  <Alert type="info" message={isReset && !success ? '新しいパスワードを設定してください。' : ''} />
+  <Alert type="success" message={success} />
+  <Alert type="error" message={error} />
+
+  <section class="app-card section">
+    <h2>アカウント</h2>
+    <p>ログイン中のメールアドレス: <strong>{Astro.locals.user!.email}</strong></p>
+    <form method="post" action="/auth/logout">
+      <button class="btn btn--ghost" type="submit">ログアウト</button>
+    </form>
+  </section>
+
+  <section class="app-card section">
+    <h2>パスワードの変更</h2>
+    <form method="post" action="/app/settings" class="password-form">
+      <label class="field">
+        新しいパスワード({MIN_PASSWORD}文字以上)
+        <input type="password" name="password" autocomplete="new-password" minlength={MIN_PASSWORD} required />
+      </label>
+      <label class="field">
+        新しいパスワード(確認)
+        <input type="password" name="password_confirm" autocomplete="new-password" minlength={MIN_PASSWORD} required />
+      </label>
+      <button class="btn" type="submit">変更する</button>
+    </form>
+  </section>
+</AppLayout>
+
+<style>
+  .section + .section {
+    margin-top: 1rem;
+  }
+  .section h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.0625rem;
+  }
+  .password-form {
+    display: grid;
+    gap: 0.75rem;
+  }
+</style>

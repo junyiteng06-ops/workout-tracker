@@ -1,0 +1,86 @@
+---
+import { Image } from 'astro:assets';
+import { CATEGORIES } from '@/config/site';
+import { formatDate, type Article } from '@/lib/articles';
+
+interface Props {
+  article: Article;
+}
+
+const { id, data } = Astro.props.article;
+---
+
+<article class="card">
+  <a class="card__link" href={`/articles/${id}`}>
+    {
+      data.heroImage ? (
+        <Image class="card__image" src={data.heroImage} alt={data.heroAlt ?? ''} width={480} height={270} />
+      ) : (
+        <div class="card__image card__image--empty" aria-hidden="true">
+          {CATEGORIES[data.category].label}
+        </div>
+      )
+    }
+    <div class="card__body">
+      <p class="card__meta">
+        <span class="card__category">{CATEGORIES[data.category].label}</span>
+        <time datetime={data.pubDate.toISOString()}>{formatDate(data.pubDate)}</time>
+      </p>
+      <h3 class="card__title">{data.title}</h3>
+    </div>
+  </a>
+</article>
+
+<style>
+  .card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--color-bg);
+  }
+  .card__link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+  .card__link:hover .card__title {
+    color: var(--color-primary);
+  }
+  .card__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+  .card__image--empty {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--color-surface), var(--color-border));
+    color: var(--color-muted);
+    font-weight: 700;
+  }
+  .card__body {
+    padding: 0.75rem 1rem 1rem;
+  }
+  .card__meta {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .card__category {
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: var(--color-surface);
+    font-weight: 700;
+  }
+  .card__title {
+    margin: 0.35rem 0 0;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+</style>

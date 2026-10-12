@@ -1,0 +1,241 @@
+---
+import AdSlot from '@/components/ads/AdSlot.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import CtaBox from '@/components/CtaBox.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { brzycki, epley, REP_PERCENTAGES, roundTo } from '@/lib/oneRepMax';
+import { breadcrumbJsonLd } from '@/lib/seo';
+import { SITE } from '@/config/site';
+
+const crumbs = [{ label: 'ツール', href: '/tools' }, { label: '1RM計算' }];
+const initial = { weight: 60, reps: 8, step: 2.5 };
+const initialEpley = epley(initial.weight, initial.reps);
+const initialBrzycki = brzycki(initial.weight, initial.reps);
+const initialRm = (initialEpley + initialBrzycki) / 2;
+const appJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '1RM計算ツール',
+  url: new URL('/tools/1rm', Astro.site).toString(),
+  applicationCategory: 'HealthApplication',
+  operatingSystem: 'All',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
+  publisher: { '@type': 'Organization', name: SITE.name },
+};
+---
+
+<BaseLayout
+  title="1RM計算ツール|ベンチプレス・スクワットの最大挙上重量を自動計算"
+  description="挙げた重量と回数を入力するだけで、1RM(最大挙上重量)を自動計算。Epley式・Brzycki式に対応し、5回・8回・10回など目的別に扱うべき重量の目安も一覧で表示します。"
+  jsonLd={[breadcrumbJsonLd(crumbs, Astro.site!), appJsonLd]}
+>
+  <div class="container container--narrow">
+    <Breadcrumbs items={crumbs} />
+    <h1>1RM計算ツール</h1>
+    <p>挙げた重量と回数を入力すると、1回だけ挙げられる最大重量(1RM)の推定値と、回数ごとの重量の目安を計算します。</p>
+
+    <form id="rm-form" class="calc" novalidate>
+      <div class="calc__fields">
+        <label>
+          重量(kg)
+          <input name="weight" type="number" inputmode="decimal" min="1" max="500" step="0.5" value={initial.weight} required />
+        </label>
+        <label>
+          回数
+          <input name="reps" type="number" inputmode="numeric" min="1" max="30" step="1" value={initial.reps} required />
+        </label>
+        <label>
+          丸め単位
+          <select name="step">
+            <option value="2.5" selected>2.5kg</option>
+            <option value="1.25">1.25kg</option>
+            <option value="1">1kg</option>
+            <option value="0.5">0.5kg</option>
+          </select>
+        </label>
+      </div>
+
+      <output class="calc__result" name="result" for="weight reps" aria-live="polite">
+        <span class="calc__label">推定1RM</span>
+        <span class="calc__value"><span id="rm-value">{initialRm.toFixed(1)}</span> kg</span>
+        <span class="calc__sub">Epley式 <span id="rm-epley">{initialEpley.toFixed(1)}</span>kg / Brzycki式 <span id="rm-brzycki">{initialBrzycki.toFixed(1)}</span>kg</span>
+        <span class="calc__warn" id="rm-warn" hidden>回数が10回を超えると推定の誤差が大きくなります。</span>
+      </output>
+
+      <table class="calc__table">
+        <caption>回数別の重量の目安</caption>
+        <thead>
+          <tr><th scope="col">回数</th><th scope="col">%1RM</th><th scope="col">重量</th><th scope="col">主な目的</th></tr>
+        </thead>
+        <tbody id="rm-table">
+          {
+            REP_PERCENTAGES.map(({ reps, percent }) => (
+              <tr data-percent={percent}>
+                <td>{reps}回</td>
+                <td>{percent}%</td>
+                <td class="calc__weight">{roundTo((initialRm * percent) / 100, initial.step)}kg</td>
+                <td>{reps <= 5 ? '筋力' : reps <= 12 ? '筋肥大' : '筋持久力'}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </form>
+
+    <AdSlot position="in-article" />
+
+    <div class="prose">
+      <h2>1RMとは</h2>
+      <p>
+        1RM(1 Repetition Maximum)とは、ある種目を<strong>1回だけ挙げられる最大の重量</strong>のことです。トレーニングの強度を「1RMの何%か」で表すことで、目的に合った重量設定ができます。
+      </p>
+      <p>
+        実際に限界重量に挑戦するとケガのリスクがあるため、多くの場合は「60kgで8回挙がった」のような記録から計算式で推定します。このツールはその計算を自動で行います。
+      </p>
+
+      <h2>計算式について</h2>
+      <p>このツールでは代表的な2つの計算式を使い、その平均を推定1RMとして表示しています。</p>
+      <ul>
+        <li><strong>Epley式</strong>: 1RM = 重量 × (1 + 回数 ÷ 30)</li>
+        <li><strong>Brzycki式</strong>: 1RM = 重量 × 36 ÷ (37 − 回数)</li>
+      </ul>
+      <p>どちらの式も、10回以下で限界まで挙げた記録を使うと精度が高くなります。</p>
+
+      <h2>目的別の重量設定の目安</h2>
+      <ul>
+        <li><strong>筋力アップ</strong>: 1RMの85%以上で1〜5回</li>
+        <li><strong>筋肥大</strong>: 1RMの67〜85%で6〜12回</li>
+        <li><strong>筋持久力</strong>: 1RMの67%以下で12回以上</li>
+      </ul>
+      <p>あくまで目安なので、フォームを崩さずに狙った回数をこなせる重量から始めましょう。</p>
+    </div>
+
+    <CtaBox />
+  </div>
+</BaseLayout>
+
+<script>
+  import { brzycki, epley, roundTo } from '@/lib/oneRepMax';
+
+  const form = document.getElementById('rm-form') as HTMLFormElement;
+  const $ = (id: string) => document.getElementById(id)!;
+
+  function update() {
+    const weight = Number((form.elements.namedItem('weight') as HTMLInputElement).value);
+    const reps = Math.round(Number((form.elements.namedItem('reps') as HTMLInputElement).value));
+    const step = Number((form.elements.namedItem('step') as HTMLSelectElement).value);
+    const valid = weight > 0 && reps >= 1 && reps <= 30;
+
+    const e = valid ? epley(weight, reps) : NaN;
+    const b = valid ? brzycki(weight, reps) : NaN;
+    const rm = (e + b) / 2;
+    const fmt = (v: number) => (Number.isFinite(v) ? v.toFixed(1) : '-');
+
+    $('rm-value').textContent = fmt(rm);
+    $('rm-epley').textContent = fmt(e);
+    $('rm-brzycki').textContent = fmt(b);
+    $('rm-warn').hidden = !(valid && reps > 10);
+
+    for (const row of $('rm-table').querySelectorAll<HTMLTableRowElement>('tr')) {
+      const percent = Number(row.dataset.percent);
+      row.querySelector('.calc__weight')!.textContent = valid ? `${roundTo((rm * percent) / 100, step)}kg` : '-';
+    }
+  }
+
+  form.addEventListener('input', update);
+  form.addEventListener('submit', (e) => e.preventDefault());
+  update();
+</script>
+
+<style>
+  .calc {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+  }
+  .calc__fields {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+  .calc__fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  .calc input,
+  .calc select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 1.125rem;
+  }
+  .calc__result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1.25rem 0;
+    padding: 1rem;
+    border-radius: var(--radius);
+    background: var(--color-bg);
+    text-align: center;
+  }
+  .calc__label {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+  .calc__value {
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: var(--color-primary);
+    line-height: 1.3;
+  }
+  .calc__sub {
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .calc__warn {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--color-primary);
+  }
+  .calc__table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg);
+    font-size: 0.9375rem;
+  }
+  .calc__table caption {
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    text-align: left;
+  }
+  .calc__table th,
+  .calc__table td {
+    padding: 0.45rem 0.5rem;
+    border: 1px solid var(--color-border);
+    text-align: center;
+  }
+  .calc__table th {
+    background: var(--color-surface);
+  }
+  .calc__weight {
+    font-weight: 700;
+  }
+  @media (max-width: 480px) {
+    .calc__fields {
+      grid-template-columns: 1fr 1fr;
+    }
+    .calc__fields label:last-child {
+      grid-column: span 2;
+    }
+  }
+</style>

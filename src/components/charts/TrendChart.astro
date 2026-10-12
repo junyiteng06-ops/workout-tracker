@@ -1,0 +1,148 @@
+---
+import type { ChartSpec } from '@/lib/charts/types';
+import { formatDateJa } from '@/lib/workouts';
+
+interface Props {
+  title: string;
+  /** スクリーンリーダー向けの要約(例: 「推定1RMは80kgから85kgに伸びています」) */
+  summary: string;
+  spec: ChartSpec;
+  height?: number;
+}
+
+const { title, summary, spec, height = 240 } = Astro.props;
+const fmt = (v: number | null) => (v === null ? '-' : `${Math.round(v * 10) / 10}${spec.unit}`);
+---
+
+<figure class="chart app-card" data-chart-spec={JSON.stringify(spec)}>
+  <figcaption class="chart__title">{title}</figcaption>
+  {
+    spec.series.length > 1 && (
+      <ul class="chart__legend">
+        {spec.series.map((s, i) => (
+          <li>
+            <span class:list={['chart__key', `chart__key--${spec.kind}`]} style={`--key: var(--series-${i + 1})`} aria-hidden="true" />
+            {s.label}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  <div class="chart__plot" style={`height: ${height}px`}>
+    <canvas role="img" aria-label={`${title}。${summary} 左右の矢印キーで各日の値を確認できます。`} tabindex="0"></canvas>
+  </div>
+  <details class="chart__table">
+    <summary>表で見る</summary>
+    <div class="chart__scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">日付</th>
+            {spec.series.map((s) => <th scope="col">{s.label}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {
+            [...spec.points].reverse().map((p) => (
+              <tr>
+                <td>{formatDateJa(p.date)}</td>
+                {p.values.map((v) => (
+                  <td>{fmt(v)}</td>
+                ))}
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </details>
+</figure>
+
+<script>
+  // Chart.js はグラフがあるページでだけ読み込む
+  if (document.querySelector('[data-chart-spec]')) {
+    import('@/lib/charts/client').then(({ renderCharts }) => renderCharts());
+  }
+</script>
+
+<style>
+  .chart {
+    margin: 0 0 1rem;
+  }
+  .chart__title {
+    font-weight: 700;
+  }
+  .chart__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .chart__legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .chart__key {
+    display: inline-block;
+    background: var(--key);
+  }
+  .chart__key--line {
+    width: 14px;
+    height: 2px;
+    border-radius: 1px;
+  }
+  .chart__key--bar {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+  .chart__plot {
+    position: relative;
+    margin-top: 0.5rem;
+  }
+  .chart__plot canvas:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .chart__table {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+  }
+  .chart__table summary {
+    color: var(--color-muted);
+    cursor: pointer;
+  }
+  .chart__scroll {
+    max-height: 18rem;
+    overflow: auto;
+    margin-top: 0.5rem;
+  }
+  .chart__table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .chart__table th,
+  .chart__table td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    text-align: right;
+  }
+  .chart__table th:first-child,
+  .chart__table td:first-child {
+    text-align: left;
+  }
+  .chart__table th {
+    position: sticky;
+    top: 0;
+    background: var(--color-bg);
+    color: var(--color-muted);
+    font-weight: 700;
+  }
+</style>

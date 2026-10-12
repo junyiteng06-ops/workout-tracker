@@ -1,0 +1,83 @@
+---
+import { CATEGORIES, SITE } from '@/config/site';
+import { getActiveCategories } from '@/lib/articles';
+
+const year = new Date().getFullYear();
+const activeCategories = await getActiveCategories();
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <p class="footer__heading">コラム</p>
+        <ul>
+          {
+            activeCategories.map((key) => (
+              <li>
+                <a href={`/articles/category/${key}`}>{CATEGORIES[key].label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">ツール</p>
+        <ul>
+          <li><a href="/tools/1rm">1RM計算ツール</a></li>
+          <li><a href="/app">トレーニングログ</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">サイトについて</p>
+        <ul>
+          <li><a href="/about">運営者情報</a></li>
+          <li><a href="/privacy">プライバシーポリシー</a></li>
+          <li><a href="/disclosure">広告掲載について</a></li>
+          <li><a href="/contact">お問い合わせ</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer__disclosure">
+      当サイトはAmazonのアソシエイトとして、適格販売により収入を得ています。また、楽天アフィリエイト等のアフィリエイトプログラムおよびGoogle AdSenseによる広告を掲載しています。
+    </p>
+    <p class="footer__copy">&copy; {year} {SITE.name}</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: 4rem;
+    padding: 2.5rem 0 1.5rem;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    font-size: 0.875rem;
+  }
+  .footer__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+  }
+  .footer__heading {
+    margin: 0 0 0.5rem;
+    font-weight: 700;
+  }
+  .footer ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .footer a {
+    color: var(--color-muted);
+  }
+  .footer__disclosure {
+    margin: 2rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+  }
+  .footer__copy {
+    margin: 1rem 0 0;
+    color: var(--color-muted);
+    text-align: center;
+  }
+</style>

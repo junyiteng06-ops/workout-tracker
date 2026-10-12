@@ -1,0 +1,62 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<BaseLayout title={title} noindex>
+  <div class="auth">
+    <h1 class="auth__title">{title}</h1>
+    <slot />
+  </div>
+</BaseLayout>
+
+<style>
+  .auth {
+    width: 100%;
+    max-width: 420px;
+    margin: 2.5rem auto;
+    padding: 0 var(--gutter);
+  }
+  .auth__title {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+  .auth :global(form) {
+    display: grid;
+    gap: 1rem;
+  }
+  .auth :global(label) {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  .auth :global(input) {
+    width: 100%;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 1rem;
+  }
+  .auth :global(.btn) {
+    width: 100%;
+  }
+  .auth :global(.auth__links) {
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+  .auth :global(.auth__note) {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+</style>

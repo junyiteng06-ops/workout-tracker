@@ -1,0 +1,21 @@
+---
+import Alert from '@/components/Alert.astro';
+import WorkoutForm from '@/components/app/WorkoutForm';
+import AppLayout from '@/layouts/AppLayout.astro';
+import { listExercises } from '@/lib/exercises';
+import { todayJst } from '@/lib/http';
+
+export const prerender = false;
+
+const { data: exercises, error } = await listExercises(Astro.locals.supabase);
+---
+
+<AppLayout title="トレーニングを記録">
+  {
+    error ? (
+      <Alert type="error" message="種目の読み込みに失敗しました。時間をおいて再読み込みしてください。" />
+    ) : (
+      <WorkoutForm client:load exercises={exercises} today={todayJst()} />
+    )
+  }
+</AppLayout>

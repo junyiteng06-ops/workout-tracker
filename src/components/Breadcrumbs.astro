@@ -1,0 +1,39 @@
+---
+import type { Crumb } from '@/lib/seo';
+
+interface Props {
+  items: Crumb[];
+}
+
+const items: Crumb[] = [{ label: 'ホーム', href: '/' }, ...Astro.props.items];
+
+---
+
+<nav class="crumbs" aria-label="パンくずリスト">
+  <ol>
+    {
+      items.map((c) => (
+        <li>{c.href ? <a href={c.href}>{c.label}</a> : <span aria-current="page">{c.label}</span>}</li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+  .crumbs li + li::before {
+    content: '›';
+    margin: 0 0.5rem;
+  }
+  .crumbs a {
+    color: var(--color-muted);
+  }
+</style>

@@ -1,0 +1,115 @@
+---
+import { PRODUCTS, type Product, type ProductId } from '@/data/products';
+import { AFFILIATE_REL, SHOP_LABELS, shopLinks } from '@/lib/affiliate';
+
+interface Props {
+  id: ProductId;
+}
+
+const product: Product = PRODUCTS[Astro.props.id];
+if (!product) throw new Error(`ProductCard: 未登録の商品IDです: ${Astro.props.id}`);
+const links = shopLinks(product);
+---
+
+<div class="product">
+  {
+    product.image && (
+      <img class="product__image" src={product.image} alt={product.name} width="120" height="120" loading="lazy" decoding="async" />
+    )
+  }
+  <div class="product__body">
+    <p class="product__name">{product.name}</p>
+    {product.price && <p class="product__price">参考価格: {product.price}</p>}
+    {
+      product.points && (
+        <ul class="product__points">
+          {product.points.map((p) => (
+            <li>{p}</li>
+          ))}
+        </ul>
+      )
+    }
+    <div class="product__shops">
+      {
+        links.map(({ shop, href }) => (
+          <a class:list={['product__btn', `product__btn--${shop}`]} href={href} rel={AFFILIATE_REL} target="_blank">
+            {SHOP_LABELS[shop]}
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .product {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+  }
+  .product__image {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+  }
+  .product__body {
+    flex: 1;
+    min-width: 0;
+  }
+  .product__name {
+    margin: 0;
+    font-weight: 700;
+  }
+  .product__price {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+  .product__points {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+    font-size: 0.875rem;
+  }
+  .product__shops {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .product__btn {
+    flex: 1 1 10rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+  }
+  .product__btn:hover {
+    opacity: 0.85;
+  }
+  .product__btn--amazon {
+    background: #e47911;
+  }
+  .product__btn--rakuten {
+    background: #bf0000;
+  }
+  .product__btn--yahoo {
+    background: #ff0033;
+  }
+  @media (max-width: 480px) {
+    .product {
+      flex-direction: column;
+      align-items: center;
+    }
+    .product__body {
+      width: 100%;
+    }
+  }
+</style>

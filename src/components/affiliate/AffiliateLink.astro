@@ -1,0 +1,16 @@
+---
+import { PRODUCTS, type ProductId } from '@/data/products';
+import { AFFILIATE_REL, shopLinks, type Shop } from '@/lib/affiliate';
+
+interface Props {
+  id: ProductId;
+  shop?: Shop;
+}
+
+const { id, shop = 'amazon' } = Astro.props;
+const product = PRODUCTS[id];
+if (!product) throw new Error(`AffiliateLink: 未登録の商品IDです: ${id}`);
+const href = shopLinks({ ...product, shops: [shop] })[0].href;
+---
+
+<a href={href} rel={AFFILIATE_REL} target="_blank"><slot>{product.name}</slot></a>

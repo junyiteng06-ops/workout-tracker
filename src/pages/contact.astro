@@ -1,0 +1,17 @@
+---
+import { SITE } from '@/config/site';
+import PageLayout from '@/layouts/PageLayout.astro';
+---
+
+<PageLayout title="お問い合わせ" description={`${SITE.name}へのお問い合わせ窓口です。`}>
+  <p>当サイトに関するご質問、記事内容の誤りのご指摘、広告掲載のご相談などは、下記のメールアドレスまでご連絡ください。</p>
+  <p class="email"><a href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a></p>
+  <p>内容を確認のうえ、原則として数日以内にご返信いたします。内容によってはご返信できない場合があります。あらかじめご了承ください。</p>
+</PageLayout>
+
+<style>
+  .email {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+</style>

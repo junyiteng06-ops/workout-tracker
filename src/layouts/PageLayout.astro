@@ -1,0 +1,24 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { breadcrumbJsonLd } from '@/lib/seo';
+
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+}
+
+const { title, description, noindex } = Astro.props;
+const crumbs = [{ label: title }];
+---
+
+<BaseLayout title={title} description={description} noindex={noindex} jsonLd={[breadcrumbJsonLd(crumbs, Astro.site!)]}>
+  <div class="container container--narrow">
+    <Breadcrumbs items={crumbs} />
+    <h1>{title}</h1>
+    <div class="prose">
+      <slot />
+    </div>
+  </div>
+</BaseLayout>

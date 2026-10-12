@@ -1,0 +1,91 @@
+---
+import { ADS, type AdPosition } from '@/config/site';
+
+interface Props {
+  position?: AdPosition;
+}
+
+const { position = 'in-article' } = Astro.props;
+const slot = ADS.slots[position];
+const enabled = Boolean(ADS.client && slot);
+const showPlaceholder = !enabled && import.meta.env.DEV;
+---
+
+{
+  (enabled || showPlaceholder) && (
+    <aside class="ad" data-position={position} aria-label="スポンサーリンク">
+      <p class="ad__label">スポンサーリンク</p>
+      {enabled ? (
+        <ins
+          class="adsbygoogle"
+          style="display:block"
+          data-ad-client={ADS.client}
+          data-ad-slot={slot}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+      ) : (
+        <div class="ad__placeholder">広告枠({position})※開発時のみ表示</div>
+      )}
+    </aside>
+  )
+}
+
+<script>
+  // 広告は画面に近づいてから読み込み、初期表示の速度を落とさない
+  const slots = document.querySelectorAll<HTMLModElement>('ins.adsbygoogle');
+  if (slots.length > 0) {
+    let loading: Promise<void> | undefined;
+    const loadScript = (client: string) =>
+      (loading ??= new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`;
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        s.onload = () => resolve();
+        s.onerror = () => reject();
+        document.head.append(s);
+      }));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          observer.unobserve(entry.target);
+          const el = entry.target as HTMLModElement;
+          loadScript(el.dataset.adClient!)
+            .then(() => {
+              const w = window as unknown as { adsbygoogle: unknown[] };
+              (w.adsbygoogle = w.adsbygoogle || []).push({});
+            })
+            .catch(() => el.closest('.ad')?.remove());
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+    slots.forEach((el) => observer.observe(el));
+  }
+</script>
+
+<style>
+  .ad {
+    margin: 2rem 0;
+    min-height: 300px;
+    contain: layout;
+  }
+  .ad__label {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    text-align: center;
+  }
+  .ad__placeholder {
+    display: grid;
+    place-items: center;
+    height: 280px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-muted);
+    font-size: 0.875rem;
+  }
+</style>

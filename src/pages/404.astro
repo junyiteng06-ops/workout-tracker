@@ -1,0 +1,18 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="ページが見つかりません" noindex>
+  <div class="container container--narrow notfound">
+    <h1>ページが見つかりません</h1>
+    <p>お探しのページは移動または削除された可能性があります。</p>
+    <p><a class="btn" href="/">トップページへ戻る</a></p>
+  </div>
+</BaseLayout>
+
+<style>
+  .notfound {
+    padding: 3rem var(--gutter);
+    text-align: center;
+  }
+</style>

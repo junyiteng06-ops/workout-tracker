@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "workout-tracker",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Supabase の publishable key はブラウザに渡しても安全な公開キー(RLS でデータを保護している)
+  // service_role / secret キーは絶対にここに書かないこと
+  "vars": {
+    "SUPABASE_URL": "https://kpxlkdqibeobprdcjvrp.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WRFXR1P_-nyHwOA91tmmZA_eg1YkYXo"
+  }
+}

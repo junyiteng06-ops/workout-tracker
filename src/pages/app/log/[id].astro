@@ -1,0 +1,39 @@
+---
+import Alert from '@/components/Alert.astro';
+import WorkoutForm from '@/components/app/WorkoutForm';
+import AppLayout from '@/layouts/AppLayout.astro';
+import { listExercises } from '@/lib/exercises';
+import { todayJst } from '@/lib/http';
+import { parseId } from '@/lib/workoutApi';
+import { groupSets, WORKOUT_SELECT } from '@/lib/workouts';
+
+export const prerender = false;
+
+const id = parseId(Astro.params.id);
+if (!id) return new Response(null, { status: 404 });
+
+const { supabase } = Astro.locals;
+const [workoutRes, exercisesRes] = await Promise.all([
+  supabase.from('workouts').select(WORKOUT_SELECT).eq('id', id).maybeSingle(),
+  listExercises(supabase),
+]);
+
+if (!workoutRes.error && !workoutRes.data) return new Response(null, { status: 404 });
+const workout = workoutRes.data;
+const initial = workout && {
+  id: workout.id,
+  performed_on: workout.performed_on,
+  note: workout.note,
+  blocks: groupSets(workout.workout_sets).map((g) => ({ exerciseId: g.exerciseId, sets: g.sets })),
+};
+---
+
+<AppLayout title="トレーニングを編集">
+  {
+    workoutRes.error || exercisesRes.error || !initial ? (
+      <Alert type="error" message="データの読み込みに失敗しました。時間をおいて再読み込みしてください。" />
+    ) : (
+      <WorkoutForm client:load exercises={exercisesRes.data} today={todayJst()} initial={initial} />
+    )
+  }
+</AppLayout>

@@ -1,0 +1,20 @@
+---
+import ArticleCard from '@/components/ArticleCard.astro';
+import type { Article } from '@/lib/articles';
+
+interface Props {
+  articles: Article[];
+}
+---
+
+<div class="grid">
+  {Astro.props.articles.map((article) => <ArticleCard article={article} />)}
+</div>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+</style>

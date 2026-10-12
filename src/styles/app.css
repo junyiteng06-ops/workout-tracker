@@ -1,0 +1,251 @@
+/* グラフ用の色(validate_palette で明暗両モードの判別性・コントラストを検証済み) */
+:root {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-muted: #6f6e69;
+  --delta-up: #006300;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --chart-grid: #2c2c2a;
+    --chart-axis: #4a4a46;
+    --chart-muted: #9a9890;
+    --delta-up: #0ca30c;
+  }
+}
+
+.app-card {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.input,
+.app input:not([type='checkbox'], [type='radio']),
+.app select,
+.app textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.app textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.btn.btn--small {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.875rem;
+}
+
+.btn.btn--ghost {
+  background: transparent;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.btn.btn--danger {
+  background: transparent;
+  color: #e03131;
+  border: 1px solid currentColor;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+.empty {
+  padding: 2rem 1rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+/* トレーニング入力フォーム */
+.wf {
+  display: grid;
+  gap: 1rem;
+}
+
+.wf-error {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, #e03131 40%, var(--color-bg));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, #e03131 14%, var(--color-bg));
+}
+
+.wf-date {
+  max-width: 14rem;
+}
+
+.wf-block {
+  margin: 0;
+  min-width: 0;
+}
+
+.wf-block__head {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wf-block__head select {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.wf-last {
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.wf-new {
+  display: grid;
+  grid-template-columns: 1fr 7rem;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+.wf-new__actions {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 0.5rem;
+}
+
+.wf-sets {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.wf-set {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr 2.25rem;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wf-set--head {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.wf-set__no {
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.wf-set input {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.wf-set__remove {
+  height: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.wf-set__remove:disabled {
+  visibility: hidden;
+}
+
+.wf-add-set {
+  margin-top: 0.6rem;
+}
+
+.wf-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.wf-save {
+  padding: 0.9rem;
+  font-size: 1.0625rem;
+}
+
+/* 統計タイル */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tile__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.tile__value {
+  margin: 0.15rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.tile__value small {
+  margin-left: 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.tile__delta {
+  margin: 0.1rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.tile__delta--up {
+  color: var(--delta-up);
+  font-weight: 700;
+}

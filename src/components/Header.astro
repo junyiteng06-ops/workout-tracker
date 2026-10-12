@@ -1,0 +1,76 @@
+---
+import { SITE } from '@/config/site';
+
+const nav = [
+  { href: '/articles', label: 'コラム' },
+  { href: '/tools', label: 'ツール' },
+  { href: '/app', label: 'マイログ' },
+];
+const current = Astro.url.pathname;
+---
+
+<header class="header">
+  <div class="container header__inner">
+    <a class="header__logo" href="/">{SITE.name}</a>
+    <nav aria-label="メインメニュー">
+      <ul class="header__nav">
+        {
+          nav.map(({ href, label }) => (
+            <li>
+              <a href={href} aria-current={current === href || current.startsWith(`${href}/`) ? 'page' : undefined}>
+                {label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 56px;
+  }
+  .header__logo {
+    color: var(--color-text);
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .header__nav {
+    display: flex;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+  .header__nav a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .header__nav a[aria-current='page'] {
+    color: var(--color-primary);
+  }
+  @media (max-width: 480px) {
+    .header__nav {
+      gap: 0.9rem;
+      font-size: 0.875rem;
+    }
+  }
+</style>
