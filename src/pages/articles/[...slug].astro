@@ -11,7 +11,7 @@ import CtaBox from '@/components/CtaBox.astro';
 import { CATEGORIES } from '@/config/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { formatDate, getPublishedArticles, relatedArticles, type Article } from '@/lib/articles';
-import { articleJsonLd, breadcrumbJsonLd, type Crumb } from '@/lib/seo';
+import { articleJsonLd, breadcrumbJsonLd, cleanPath, type Crumb } from '@/lib/seo';
 
 export async function getStaticPaths() {
   const articles = await getPublishedArticles();
@@ -50,7 +50,7 @@ const ogImage = data.heroImage?.src ?? '/og-default.png';
     articleJsonLd({
       title: data.title,
       description: data.description,
-      url: new URL(Astro.url.pathname, site),
+      url: new URL(cleanPath(Astro.url.pathname), site),
       image: new URL(ogImage, site),
       published: data.pubDate,
       modified: data.updatedDate,
